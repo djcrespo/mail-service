@@ -10,6 +10,7 @@ class Person(Base):
     last_name = Column(String(50), unique=True, index=True)
     contact = relationship("Contact", back_populates="person", uselist=False, cascade="all, delete-orphan")
     emails = relationship("Email", back_populates="person", uselist=False, cascade="all, delete-orphan")
+    emails_cotizacion = relationship("EmailsCotizacion", back_populates="person", uselist=False, cascade="all, delete-orphan")
 
 class Contact(Base):
     __tablename__ = "contact_persons"

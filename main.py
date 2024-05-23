@@ -5,12 +5,29 @@ from app.persons import models as personsModels
 from app.emails import models as emailsModels
 from app.emails.services import send_message
 from db import SessionLocal, engine
+from fastapi.middleware.cors import CORSMiddleware
 import os
 import resend
 
 app = FastAPI()
 
 resend.api_key = os.environ["RESEND_API_KEY"]
+
+# Configuración de CORS
+origins = [
+    "http://localhost",
+    "http://localhost:8080",
+    "http://example.com",
+    # Agrega aquí los dominios que desees permitir
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=os.environ["ORIGINS"].split(" "),  # Permitir estos orígenes
+    allow_credentials=True,  # Permitir el envío de cookies
+    allow_methods=["*"],  # Permitir estos métodos HTTP
+    allow_headers=["*"],  # Permitir estos headers
+)
 
 # Coneccion con la base de datos
 def get_db():

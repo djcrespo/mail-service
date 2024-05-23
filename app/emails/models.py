@@ -8,7 +8,7 @@ class Email(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     subject = Column(String(50), unique=False, index=True)
-    message = Column(String(255), unique=True, index=True)
+    message = Column(String(255), unique=False, index=True)
     person_id = Column(Integer, ForeignKey("persons.id"))
     person = relationship("Person", back_populates="emails")
 

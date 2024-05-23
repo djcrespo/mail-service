@@ -5,8 +5,6 @@ resend.api_key = os.environ["RESEND_API_KEY"]
 to_emails = os.environ["TO_EMAILS"].split(" ")
 
 def send_message(html_body):
-    print(to_emails)
-
     params = {
         "from": "Pagina web <web@jarkol.com>",
         "to": to_emails,
