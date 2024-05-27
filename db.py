@@ -12,6 +12,8 @@ DB_PASSWORD = os.getenv('DB_PASSWORD')
 DATABASE_URL = f"mysql+pymysql://{DB_USERNAME}:{DB_PASSWORD}@{DB_IP}/{DB_NAME}"
 
 # Crear el motor de la base de datos
-engine = create_engine(DATABASE_URL)
+engine = create_engine(DATABASE_URL, pool_pre_ping=True, pool_recycle=3600, connect_args={
+    "connect_timeout": 10,
+})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
