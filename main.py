@@ -159,7 +159,7 @@ def enviar_msj(correoMensaje: CorreoMensaje, db: Session = Depends(get_db)):
     # Template del correo
     template = f"""
             <h2>Información de contacto</h2>
-            <p><strong>Nombre:</strong> {person.first_name} {person.last_name}</p>
+            <p><strong>Nombre:</strong> {person_data.first_name} {person_data.last_name}</p>
             <p><strong>Correo electrónico:</strong> {contact.mail}</p>
             <p><strong>Teléfono:</strong> {contact.phone}</p>
             <h2>Mensaje</h2>
