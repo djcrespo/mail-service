@@ -1,5 +1,6 @@
 from pydantic import BaseModel
-from app.persons.interfaces import PersonInterface, ContactInterface
+from app.persons.interfaces import PersonInterface, ContactInterface, AddressInterface
+from typing import Any
 
 class CorreoMensaje(BaseModel):
     person: PersonInterface
@@ -13,4 +14,5 @@ class Mensaje(BaseModel):
 class CorreoCotizacion(BaseModel):
     person: PersonInterface
     contact: ContactInterface
-    objectCotizacion: object
+    address: AddressInterface
+    objectCotizacion: str

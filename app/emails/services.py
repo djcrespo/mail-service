@@ -13,3 +13,13 @@ def send_message(html_body):
     }
 
     resend.Emails.send(params)
+
+def send_cotizacion(html_body):
+    params = {
+        "from": "Pagina web <web@jarkol.com>",
+        "to": to_emails,
+        "subject": "Nueva solicitud de cotización",
+        "html": html_body,
+    }
+
+    resend.Emails.send(params)

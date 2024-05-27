@@ -8,3 +8,7 @@ class ContactInterface(BaseModel):
     mail: str
     phone: str
     subject: str
+
+class AddressInterface(BaseModel):
+    street: str
+    postal_code: int

@@ -1,7 +1,6 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
 from db import Base, engine
 from sqlalchemy.orm import relationship
-from app.persons.models import Person
 
 class Email(Base):
     __tablename__ = "emails"

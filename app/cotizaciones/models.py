@@ -8,7 +8,7 @@ class Cotizacion(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     type = Column(String(50), unique=False, index=True)
-    message = Column(String(255), unique=True, index=True)
+    cotizacion = Column(String(500), unique=False, index=True)
     person_id = Column(Integer, ForeignKey('persons.id'), unique=True)
     person = relationship("Person", back_populates="cotizaciones")
 

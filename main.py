@@ -1,9 +1,12 @@
+import json
+
 from fastapi import FastAPI, HTTPException, Depends
 from sqlalchemy.orm import Session
 from app.emails.interfaces import *
 from app.persons import models as personsModels
 from app.emails import models as emailsModels
-from app.emails.services import send_message
+from app.cotizaciones import models as cotiModels
+from app.emails.services import send_message, send_cotizacion
 from db import SessionLocal, engine
 from fastapi.middleware.cors import CORSMiddleware
 import os
@@ -41,34 +44,79 @@ personsModels.Base.metadata.create_all(bind=engine)
 emailsModels.Base.metadata.create_all(bind=engine)
 
 @app.post('/enviar-cotizacion')
-def enviar_cotizacion(correo: CorreoCotizacion):
-    contact = correo.contact
-    person = correo.person
-    cotizacion = correo.objectCotizacion
+def enviar_cotizacion(correoCotizacion: CorreoCotizacion, db: Session = Depends(get_db)):
+    contact = correoCotizacion.contact
+    person = correoCotizacion.person
+    address = correoCotizacion.address
+    object_cotizacion = json.loads(correoCotizacion.objectCotizacion)
+    typeOption = object_cotizacion['type']
+    object_selectOption = object_cotizacion['selectOption']
+    extra_info = object_cotizacion['object']
 
-    template = """
+    if db.query(personsModels.Contact).filter_by(mail=contact.mail).first() is None:
+        db_person = personsModels.Person(
+            first_name=person.first_name,
+            last_name=person.last_name
+        )
+
+        db_contact = personsModels.Contact(
+            mail=contact.mail,
+            phone=contact.phone,
+            subject=contact.subject,
+            person=db_person
+        )
+        
+        db_address = personsModels.Address(
+            street=address.street,
+            postal_code=address.postal_code
+        )
+
+        db.add(db_person)
+        db.add(db_contact)
+        db.add(db_address)
+        db_person.contact = db_contact
+        db_person.address = db_address
+        db.commit()
+        db.refresh(db_person)
+    else:
+        db_contact = db.query(personsModels.Contact).filter_by(mail=contact.mail).first()
+        db_person = db.query(personsModels.Person).filter_by(id=db_contact.person_id).first()
+        db_address = personsModels.Address(
+            street=address.street,
+            postal_code=address.postal_code
+        )
+        db.add(db_address)
+        db.commit()
+
+    # Guardar cotización
+    db_coti = cotiModels.Cotizacion(
+        type=object_cotizacion['type']
+    )
+
+    db.add(db_coti)
+    db.commit()
+
+    # Generar el contenido dinámico para extra_info
+    extra_info_html = ''.join([f'<p><strong>{key}:</strong> {value}</p>' for key, value in extra_info.items()])
+
+    template = f"""
                 <h2>Información de contacto</h2>
                 <p><strong>Nombre:</strong> {person.first_name} {person.last_name} </p>
                 <p><strong>Correo electrónico:</strong> {contact.mail}</p>
                 <p><strong>Teléfono:</strong> {contact.phone}</p>
-                <h2>Solicitud de cotización de:</h2>
-                <p>{object}</p>
+                <br>
+                <h3>Dirección de envío:</h3>
+                <p><strong>Calle:</strong> {address.street}</p>
+                <p><strong>Código postal:</strong> {address.postal_code}</p>
+                <br>
+                <h2>Solicitud de cotización de un {typeOption}:</h2>
+                <p><strong>{object_selectOption['producto']} - {object_selectOption['tipo_producto']}</strong></p>
+                <p><strong>Condición de adquisición: </strong>{object_selectOption['condiciones_adquisicion']}</p>
+                <h3>Información adicional:</h3>
+                <p>{extra_info_html}</p>
                 """
 
-    html_content = template.format(
-        person=person,
-        object=cotizacion,
-        contact=contact
-    )
-
-    params = {
-        "from": "Jarkol.com - Nueva cotización <cotizaciones@jarkol.com>",
-        "to": [contact.mail],
-        "subject": contact.subject,
-        "html": html_content,
-    }
-
-    resend.Emails.send(params)
+    send_cotizacion(template)
 
 @app.post('/enviar-mensaje')
 def enviar_msj(correoMensaje: CorreoMensaje, db: Session = Depends(get_db)):
@@ -76,7 +124,7 @@ def enviar_msj(correoMensaje: CorreoMensaje, db: Session = Depends(get_db)):
     contact = correoMensaje.contact
     message = correoMensaje.message
 
-    if db.query(personsModels.Person).filter_by(first_name=person_data.first_name).first() is None:
+    if db.query(personsModels.Contact).filter_by(mail=contact.mail).first() is None:
         db_person = personsModels.Person(
             first_name=person_data.first_name,
             last_name=person_data.last_name
@@ -95,7 +143,8 @@ def enviar_msj(correoMensaje: CorreoMensaje, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(db_person)
     else:
-        db_person = db.query(personsModels.Person).filter_by(first_name=person_data.first_name).first()
+        db_contact = db.query(personsModels.Contact).filter_by(mail=contact.mail).first()
+        db_person = db.query(personsModels.Person).filter_by(id=db_contact.person_id).first()
 
     # Guardar mensaje
     db_mail = emailsModels.Email(
@@ -108,7 +157,7 @@ def enviar_msj(correoMensaje: CorreoMensaje, db: Session = Depends(get_db)):
     db.commit()
 
     # Template del correo
-    template = """
+    template = f"""
             <h2>Información de contacto</h2>
             <p><strong>Nombre:</strong> {person.first_name} {person.last_name}</p>
             <p><strong>Correo electrónico:</strong> {contact.mail}</p>
@@ -117,10 +166,4 @@ def enviar_msj(correoMensaje: CorreoMensaje, db: Session = Depends(get_db)):
             <p>{message}</p>
             """
 
-    html_content = template.format(
-        person=person_data,
-        contact=contact,
-        message=message
-    )
-
-    send_message(html_content)
+    send_message(template)
