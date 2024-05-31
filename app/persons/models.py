@@ -6,8 +6,8 @@ class Person(Base):
     __tablename__ = "persons"
 
     id = Column(Integer, primary_key=True, index=True)
-    first_name = Column(String(50), unique=True, index=True)
-    last_name = Column(String(50), unique=True, index=True)
+    first_name = Column(String(50), unique=False, index=True)
+    last_name = Column(String(50), unique=False, index=True)
     contact = relationship("Contact", back_populates="person", uselist=False, cascade="all, delete-orphan")
     address = relationship("Address", back_populates="person", uselist=False, cascade="all, delete-orphan")
     emails = relationship("Email", back_populates="person", uselist=False, cascade="all, delete-orphan")
@@ -19,7 +19,7 @@ class Contact(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     mail = Column(String(50), unique=True, index=True)
-    phone = Column(String(100), unique=True, index=True)
+    phone = Column(String(100), unique=False, index=True)
     subject = Column(String(50), unique=False, index=True)
     person_id = Column(Integer, ForeignKey('persons.id'), unique=True)
     person = relationship("Person", back_populates="contact")
