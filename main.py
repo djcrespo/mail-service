@@ -49,9 +49,10 @@ def enviar_cotizacion(correoCotizacion: CorreoCotizacion, db: Session = Depends(
     person = correoCotizacion.person
     address = correoCotizacion.address
     object_cotizacion = json.loads(correoCotizacion.objectCotizacion)
+    # print(object_cotizacion)
     typeOption = object_cotizacion['type']
-    object_selectOption = object_cotizacion['selectOption']
-    extra_info = object_cotizacion['object']
+    object_selectOption = json.loads(object_cotizacion['selectOption'])
+    extra_info = json.loads(object_cotizacion['object'])
 
     if db.query(personsModels.Contact).filter_by(mail=contact.mail).first() is None:
         db_person = personsModels.Person(
@@ -110,9 +111,9 @@ def enviar_cotizacion(correoCotizacion: CorreoCotizacion, db: Session = Depends(
                 <p><strong>Código postal:</strong> {address.postal_code}</p>
                 <br>
                 <h2>Solicitud de cotización de un {typeOption}:</h2>
-                <p><strong>{object_selectOption['producto']} - {object_selectOption['tipo_producto']}</strong></p>
-                <p><strong>Condición de adquisición: </strong>{object_selectOption['condiciones_adquisicion']}</p>
-                <h3>Información adicional:</h3>
+                <p><strong>{object_selectOption['producto'] if 'producto' in object_selectOption else object_selectOption['servicio']} - {object_selectOption['tipo_producto'] if 'tipo_producto' in object_selectOption else object_selectOption['tipoDeServicio']}</strong></p>
+                <p><strong>Condición de adquisición: </strong>{object_selectOption['condiciones_adquisicion'] if 'condiciones_adquisicion' in object_selectOption else ''}</p>
+                <h3>Información extra:</h3>
                 <p>{extra_info_html}</p>
                 """
 
